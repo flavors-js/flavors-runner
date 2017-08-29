@@ -25,7 +25,13 @@
     "node": ">= 6"
   },
   "files": [
-    "index.js"
+    "commandRunner.js",
+    "configLoader.js",
+    "index.js",
+    "pluginLoader.js",
+    "pluginRunner.js",
+    "processOptions.js",
+    "util.js"
   ],
   "license": "MIT",
   "bugs": {

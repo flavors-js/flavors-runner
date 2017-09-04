@@ -26,12 +26,9 @@
   },
   "files": [
     "commandRunner.js",
-    "configLoader.js",
     "index.js",
-    "pluginLoader.js",
     "pluginRunner.js",
-    "processOptions.js",
-    "util.js"
+    "processOptions.js"
   ],
   "license": "MIT",
   "bugs": {
@@ -47,6 +44,9 @@
   },
   "dependencies": {
     "flat": "^4.0.0",
-    "flavors": "^2.3.0"
+    "flavors": "^2.3.0",
+    "flavors-plugin-loader": "^1.0.0",
+    "flavors-plugin-loader-command": "^1.0.0",
+    "flavors-plugin-loader-config": "^1.0.2"
   }
 }

@@ -76,36 +76,32 @@ describe('runner', () => {
     it('with string', () => {
       assert.equal(runner(options({
         args: ['$value', '$value'],
-        command: testPath('module', 'string.js'),
+        command: require(testPath('module', 'string.js')),
         configName: 'a',
-        module: true,
         workingDir: testPath('module')
       })).stdout.toString(), '1 1 1\n');
     });
     it('with function returning string', () => {
       assert.equal(runner(options({
         args: ['$value', '$value'],
-        command: testPath('module', 'functionString.js'),
+        command: require(testPath('module', 'functionString.js')),
         configName: 'a',
-        module: true,
         workingDir: testPath('module')
       })).stdout.toString(), '1 1 1\n');
     });
     it('with function returning child_process.spawn() args', () => {
       assert.equal(runner(options({
         args: ['$value', '$value'],
-        command: testPath('module', 'spawnArgs.js'),
+        command: require(testPath('module', 'spawnArgs.js')),
         configName: 'a',
-        module: true,
         workingDir: testPath('module')
       })).stdout.toString(), '1 1 1\n');
     });
     it('with object', () => {
       assert.equal(runner(options({
         args: ['$value', '$value'],
-        command: testPath('module', 'object.js'),
+        command: require(testPath('module', 'object.js')),
         configName: 'a',
-        module: true,
         workingDir: testPath('module')
       })).stdout.toString(), '2 2 2\n');
     });

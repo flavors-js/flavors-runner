@@ -1,7 +1,3 @@
 'use strict';
 
-module.exports = options => require('./pluginRunner')(
-  require('flavors-plugin-loader')(
-    typeof options.command === 'object' ? options.command : { command: options.command },
-    [require('flavors-plugin-loader-config')(options), require('flavors-plugin-loader-command')]),
-  options);
+module.exports = options => require('./pluginRunner')(require('./pluginLoader')(options), options);

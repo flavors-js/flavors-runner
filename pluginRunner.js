@@ -5,7 +5,7 @@ module.exports = (plugin, options) => {
   if (typeof command === 'object') {
     return require('./commandRunner')(command, options, plugin.config);
   } else if (typeof command === 'function') {
-    return command();
+    return command(options);
   } else {
     return require('./commandRunner')({ command: command }, options, plugin.config);
   }

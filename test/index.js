@@ -68,7 +68,7 @@ describe('runner', () => {
     assert.equal(runner(options({
       command: 'echo $value1$value2$value3',
       configName: 'a-b-c',
-      loaders: [require(testPath('..', 'node_modules', 'flavors', 'jsonLoader.js')), require('flavors/jsLoader'), require('flavors-loader-yaml')],
+      loaders: [require('flavors/jsonLoader'), require('flavors/jsLoader'), require('flavors-loader-yaml')],
       workingDir: testPath('loaders')
     })).stdout.toString(), '123\n');
   });

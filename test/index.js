@@ -18,14 +18,14 @@ const
 
 describe('runner', () => {
   it('initializes environment', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $value',
       configName: 'a',
       workingDir: commonTestPath
     })).stdout.toString(), '1\n');
   });
   it('skips environment initialization', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $value',
       configName: 'a',
       skipEnv: true,
@@ -33,14 +33,14 @@ describe('runner', () => {
     })).stdout.toString(), '\n');
   });
   it('flattens config', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $nested_value',
       configName: 'a',
       workingDir: testPath('nested')
     })).stdout.toString(), '1\n');
   });
   it('applies transform', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       args: ['$value', '$value'],
       command: 'echo $value',
       configName: 'a',
@@ -49,7 +49,7 @@ describe('runner', () => {
     })).stdout.toString(), '2 2 2\n');
   });
   it('applies configDirName', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $value',
       configName: 'a',
       configDirName: 'config',
@@ -57,7 +57,7 @@ describe('runner', () => {
     })).stdout.toString(), '1\n');
   });
   it('applies configFileName', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $value',
       configFileName: 'custom',
       configName: 'a',
@@ -65,7 +65,7 @@ describe('runner', () => {
     })).stdout.toString(), '1\n');
   });
   it('applies loaders', () => {
-    assert.equal(runner(options({
+    assert.strictEqual(runner(options({
       command: 'echo $value1$value2$value3',
       configName: 'a-b-c',
       loaders: [require('flavors/jsonLoader'), require('flavors/jsLoader'), require('flavors-loader-yaml')],
@@ -74,7 +74,7 @@ describe('runner', () => {
   });
   describe('runs Node.js module', () => {
     it('with string', () => {
-      assert.equal(runner(options({
+      assert.strictEqual(runner(options({
         args: ['$value', '$value'],
         command: require(testPath('module', 'string.js')),
         configName: 'a',
@@ -82,7 +82,7 @@ describe('runner', () => {
       })).stdout.toString(), '1 1 1\n');
     });
     it('with function returning string', () => {
-      assert.equal(runner(options({
+      assert.strictEqual(runner(options({
         args: ['$value', '$value'],
         command: require(testPath('module', 'functionString.js')),
         configName: 'a',
@@ -90,7 +90,7 @@ describe('runner', () => {
       })).stdout.toString(), '1 1 1\n');
     });
     it('with function returning child_process.spawn() args', () => {
-      assert.equal(runner(options({
+      assert.strictEqual(runner(options({
         args: ['$value', '$value'],
         command: require(testPath('module', 'spawnArgs.js')),
         configName: 'a',
@@ -98,7 +98,7 @@ describe('runner', () => {
       })).stdout.toString(), '1 1 1\n');
     });
     it('with object', () => {
-      assert.equal(runner(options({
+      assert.strictEqual(runner(options({
         args: ['$value', '$value'],
         command: require(testPath('module', 'object.js')),
         configName: 'a',

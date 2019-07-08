@@ -36,17 +36,17 @@
   },
   "homepage": "https://github.com/flavors-js/flavors-runner#readme",
   "devDependencies": {
-    "eslint": "^5.4.0",
-    "flavors": "^3.3.1",
+    "eslint": "^6.0.1",
+    "flavors": "^4.1.1",
     "flavors-loader-yaml": "^1.0.1",
-    "mocha": "^5.2.0",
-    "semantic-release": "^15.9.9",
-    "semantic-release-cli": "^4.0.7"
+    "mocha": "^6.1.4",
+    "semantic-release": "^15.13.18",
+    "semantic-release-cli": "^5.1.1"
   },
   "dependencies": {
     "flat": "^4.0.0",
     "flavors-plugin-loader": "^1.0.0",
     "flavors-plugin-loader-command": "^1.0.2",
-    "flavors-plugin-loader-config": "^1.0.3"
+    "flavors-plugin-loader-config": "^1.1.0"
   }
 }

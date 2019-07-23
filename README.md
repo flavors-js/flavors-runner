@@ -23,6 +23,24 @@ It allows to run commands in the pre-configured environment.
 $ npm install --save-dev flavors-runner
 ```
 
+## Usage
+
+```javascript
+require('flavors-runner')(options);
+```
+### Options
+
+`options` parameter contains the same fields as [flavors `options` parameter](https://github.com/flavors-js/flavors#options-parameter) with following additional parameters:
+
+#### `command`
+Command that `flavors-runner` will run.
+
+#### `skipCwd`
+By default working directory of a process which runs the command is set to value specified in `workingDir` [option](https://github.com/flavors-js/flavors#workingdir-option). To ignore such behavior set this options to `true`.  
+
+#### `skipEnv`
+Set this option to `true` to skip environment initialization using loaded configuration.
+
 ## Maintainers
 
 - [@mxl](https://github.com/mxl)

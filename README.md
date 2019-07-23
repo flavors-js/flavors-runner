@@ -32,14 +32,23 @@ require('flavors-runner')(options);
 
 `options` parameter contains the same fields as [flavors `options` parameter](https://github.com/flavors-js/flavors#options-parameter) with following additional parameters:
 
-#### `command`
+#### `command` option
 Command that `flavors-runner` will run.
 
-#### `skipCwd`
+#### `skipCwd` option
 By default working directory of a process which runs the command is set to value specified in `workingDir` [option](https://github.com/flavors-js/flavors#workingdir-option). To ignore such behavior set this options to `true`.  
 
-#### `skipEnv`
+#### `skipEnv` option
 Set this option to `true` to skip environment initialization using loaded configuration.
+
+#### `sync` option
+
+Set this options to `true` to use [`child_process.spawnSync()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) to run command.
+By default [`child.process.spawn()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options) is used.
+
+### Returned value
+
+`require('flavors-runner')(options)` call returns result of `child_process.spawn()` or `child_process.spawnSync()` call (see `sync` [option](#sync-option)).
 
 ## Maintainers
 

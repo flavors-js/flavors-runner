@@ -32,14 +32,34 @@ require('flavors-runner')(options);
 
 `options` parameter contains the same fields as [flavors `options` parameter](https://github.com/flavors-js/flavors#options-parameter) with following additional parameters:
 
+#### `args` option
+
+[Command](#command-option) arguments.
+
 #### `command` option
-Command that `flavors-runner` will run.
+Command that `flavors-runner` will run. It can be the one of the following types:
+
+- string;
+- closure that returns string;
+- closure that returns `child_process.spawn`/`child_process.spawnSync` options arguments (see `sync` [option](#sync-option));
+- [plugin object](#plugin-object).
 
 #### `skipCwd` option
 By default working directory of a process which runs the command is set to value specified in `workingDir` [option](https://github.com/flavors-js/flavors#workingdir-option). To ignore such behavior set this options to `true`.  
 
 #### `skipEnv` option
 Set this option to `true` to skip environment initialization using loaded configuration.
+
+#### `spawnOptions` option
+
+Options passed to `child_process.spawnSync()` or `child_process.spawn()` method (see `sync` [option](#sync-option)).
+For example, use `{ shell: true }` to execute command inside shell to enable variable expansion:
+
+```javascript
+require('flavors-runner')({
+  command: 'echo $someValue'
+});
+```
 
 #### `sync` option
 
@@ -49,6 +69,42 @@ By default [`child.process.spawn()`](https://nodejs.org/api/child_process.html#c
 ### Returned value
 
 `require('flavors-runner')(options)` call returns result of `child_process.spawn()` or `child_process.spawnSync()` call (see `sync` [option](#sync-option)).
+
+### Plugin object
+
+Allows to provide flavors options and build command from flavors configuration:
+
+*config.js:*
+```javascript
+module.exports = {
+  value: 'Hello, '
+};
+```
+
+*echoPlugin.js:*
+```javascript
+module.exports = {
+  command: config => ({
+    command: 'echo',
+    args: [config.value]
+  }),
+  options: {
+    transform: config => {
+      config.value += 'world!';
+      return config;
+    }
+  }
+};
+```
+
+*Run command:*
+```javascript
+require('flavors-runner')({
+  command: require('./echoPlugin')
+});
+
+// prints "Hello, world!"
+```
 
 ## Maintainers
 

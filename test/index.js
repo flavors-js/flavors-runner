@@ -2,14 +2,18 @@
 
 const
   assert = require('assert'),
-  path = require('path');
+  path = require('path'),
+  merge = require('deepmerge');
 
 function testPath(...names) {
   return path.resolve(__dirname, ...names);
 }
 
-function options(options) {
-  return Object.assign({ sync: true, spawnOptions: { shell: true } }, options);
+function runnerOutputEqual(options, expected) {
+  assert.strictEqual(runner(merge({
+    sync: true,
+    spawnOptions: {shell: true}
+  }, options)).stdout.toString(), expected + '\n');
 }
 
 const
@@ -18,92 +22,92 @@ const
 
 describe('runner', () => {
   it('initializes environment', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $value',
       configName: 'a',
       workingDir: commonTestPath
-    })).stdout.toString(), '1\n');
+    }, '1');
   });
   it('skips environment initialization', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $value',
       configName: 'a',
       skipEnv: true,
       workingDir: commonTestPath
-    })).stdout.toString(), '\n');
+    }, '');
   });
   it('flattens config', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $nested_value',
       configName: 'a',
       workingDir: testPath('nested')
-    })).stdout.toString(), '1\n');
+    }, '1');
   });
   it('applies transform', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       args: ['$value', '$value'],
       command: 'echo $value',
       configName: 'a',
       transform: require(testPath('transform', 'index.js')),
       workingDir: commonTestPath
-    })).stdout.toString(), '2 2 2\n');
+    }, '2 2 2');
   });
   it('applies configDirName', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $value',
       configName: 'a',
       configDirName: 'config',
       workingDir: testPath('configDirName')
-    })).stdout.toString(), '1\n');
+    }, '1');
   });
   it('applies configFileName', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $value',
       configFileName: 'custom',
       configName: 'a',
       workingDir: testPath('configFileName')
-    })).stdout.toString(), '1\n');
+    }, '1');
   });
   it('applies loaders', () => {
-    assert.strictEqual(runner(options({
+    runnerOutputEqual({
       command: 'echo $value1$value2$value3',
       configName: 'a-b-c',
       loaders: [require('flavors/jsonLoader'), require('flavors/jsLoader'), require('flavors-loader-yaml')],
       workingDir: testPath('loaders')
-    })).stdout.toString(), '123\n');
+    }, '123');
   });
   describe('runs Node.js module', () => {
     it('with string', () => {
-      assert.strictEqual(runner(options({
+      runnerOutputEqual({
         args: ['$value', '$value'],
         command: require(testPath('module', 'string.js')),
         configName: 'a',
         workingDir: testPath('module')
-      })).stdout.toString(), '1 1 1\n');
+      }, '1 1 1');
     });
     it('with function returning string', () => {
-      assert.strictEqual(runner(options({
+      runnerOutputEqual({
         args: ['$value', '$value'],
         command: require(testPath('module', 'functionString.js')),
         configName: 'a',
         workingDir: testPath('module')
-      })).stdout.toString(), '1 1 1\n');
+      }, '1 1 1');
     });
     it('with function returning child_process.spawn() args', () => {
-      assert.strictEqual(runner(options({
+      runnerOutputEqual({
         args: ['$value', '$value'],
         command: require(testPath('module', 'spawnArgs.js')),
         configName: 'a',
         workingDir: testPath('module')
-      })).stdout.toString(), '1 1 1\n');
+      }, '1 1 1');
     });
     it('with object', () => {
-      assert.strictEqual(runner(options({
+      runnerOutputEqual({
         args: ['$value', '$value'],
         command: require(testPath('module', 'object.js')),
         configName: 'a',
         workingDir: testPath('module')
-      })).stdout.toString(), '2 2 2\n');
+      }, '2 2 2');
     });
   });
 });

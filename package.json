@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/flavors-js/flavors-runner#readme",
   "devDependencies": {
+    "deepmerge": "^4.0.0",
     "eslint": "^6.1.0",
     "flavors": "^4.1.2",
     "flavors-loader-yaml": "^1.0.1",

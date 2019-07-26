@@ -24,30 +24,26 @@
     "node": ">= 6"
   },
   "files": [
-    "commandRunner.js",
-    "index.js",
-    "pluginLoader.js",
-    "pluginRunner.js",
-    "processOptions.js"
+    "index.js"
   ],
+  "bin": {
+    "flavors-runner": "./index.js"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/flavors-js/flavors-runner/issues"
   },
   "homepage": "https://github.com/flavors-js/flavors-runner#readme",
   "devDependencies": {
-    "deepmerge": "^4.0.0",
     "eslint": "^6.1.0",
-    "flavors": "^4.1.2",
     "flavors-loader-yaml": "^1.0.1",
     "mocha": "^6.2.0",
     "semantic-release": "^15.13.18",
     "semantic-release-cli": "^5.1.1"
   },
   "dependencies": {
+    "deepmerge": "^4.0.0",
     "flat": "^4.0.0",
-    "flavors-plugin-loader": "^1.0.0",
-    "flavors-plugin-loader-command": "^1.0.2",
-    "flavors-plugin-loader-config": "^1.1.0"
+    "flavors": "^4.1.2"
   }
 }

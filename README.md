@@ -26,85 +26,163 @@ $ npm install --save-dev flavors-runner
 ## Usage
 
 ```javascript
-require('flavors-runner')(options);
+const runner = require('flavors-runner');
+runner(command, configName, options);
 ```
-### Options
 
-`options` parameter contains the same fields as [flavors `options` parameter](https://github.com/flavors-js/flavors#options-parameter) with following additional parameters:
+```bash
+$ FLAVORS_CONFIG_NAME=release-beta npx flavors-runner echo $app_version  
+```
 
-#### `args` option
+## Parameters
 
-[Command](#command-option) arguments.
+### `command` parameter
 
-#### `command` option
-Command that `flavors-runner` will run. It can be the one of the following types:
+Can be a one of the following types:
 
-- string;
-- closure that returns string;
-- closure that returns `child_process.spawn`/`child_process.spawnSync` options arguments (see `sync` [option](#sync-option));
-- [plugin object](#plugin-object).
-
-#### `skipCwd` option
-By default working directory of a process which runs the command is set to value specified in `workingDir` [option](https://github.com/flavors-js/flavors#workingdir-option). To ignore such behavior set this options to `true`.  
-
-#### `skipEnv` option
-Set this option to `true` to skip environment initialization using loaded configuration.
-
-#### `spawnOptions` option
-
-Options passed to `child_process.spawnSync()` or `child_process.spawn()` method (see `sync` [option](#sync-option)).
-For example, use `{ shell: true }` to execute command inside shell to enable variable expansion:
+1. string: shell command, executable name or its path;
 
 ```javascript
-require('flavors-runner')({
-  command: 'echo $someValue'
-});
+runner('echo $value', configName, options);
+runner('/path/to/your/executable', configName, options);
 ```
 
-#### `sync` option
+2. non-empty string array containing shell command, executable name or its path as first elements and its arguments as other elements;
 
-Set this options to `true` to use [`child_process.spawnSync()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) to run command.
-By default [`child.process.spawn()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options) is used.
+```javascript
+runner(['echo', '$value'], configName, options);
+```
 
-### Returned value
+3. structure with the following fields:
+  - `command`: required, see 1;
+  - `args`: optional arguments;
 
-`require('flavors-runner')(options)` call returns result of `child_process.spawn()` or `child_process.spawnSync()` call (see `sync` [option](#sync-option)).
+```javascript
+runner({command: 'echo', args: ['Hello, ', '$value', '!'] }, configName, options);
+```
 
-### Plugin object
+4. function receiving flavors configuration and returning value of the one of listed above types or `undefined` (i.e. without `return` statement);
 
-Allows to provide flavors options and build command from flavors configuration:
+```javascript
+runner(config => ['echo', config.value], configName, options);
 
-*config.js:*
+runner(config => ({ command: 'echo', args: ['Hello, ', config.value, '!'] }), configName, options);
+
+runner(config => { console.log(config.value); }, configName, options);
+```
+
+5. plugin structure:
+  - `command`: see 4;
+  - `options` - plugin specific flavors options, which is merged with [`options` parameter](#options-parameter);
+
+*example/config.js*:
 ```javascript
 module.exports = {
-  value: 'Hello, '
+  value: 'world'
 };
 ```
 
-*echoPlugin.js:*
+*echoPlugin.js*:
 ```javascript
 module.exports = {
-  command: config => ({
-    command: 'echo',
-    args: [config.value]
-  }),
+  command: config => ['echo', 'Hello, ' + config.value],
   options: {
     transform: config => {
-      config.value += 'world!';
+      config.value += '!';
       return config;
     }
   }
 };
 ```
 
-*Run command:*
 ```javascript
-require('flavors-runner')({
-  command: require('./echoPlugin')
-});
+runner(require('./echoPlugin'), 'example', options);
 
 // prints "Hello, world!"
 ```
+
+6. structure with the following fields:
+  - `plugin`: see 5;
+  - `args`: array with additional plugin arguments or function receiving flavors configuration and returning this array;
+        
+```javascript
+runner({plugin: require('./echoPlugin'), args: config => [' And goodbye, ' + config.value]}, 'example', options);
+
+// prints "Hello, world! And goodbye, world!"
+``` 
+
+### `configName` parameter
+
+[Flavors configuration name](https://github.com/flavors-js/flavors#configname-parameter).
+
+### `options` parameter
+
+Contains the same fields as [flavors `options` parameter](https://github.com/flavors-js/flavors#options-parameter) with following additional parameters:
+
+#### `command` options
+
+When command resolved to executable name and its arguments runner will try to resolve it to command defined in flavors configuration.
+This command must be a string or a function, that accepts arguments, loaded flavors configuration and `runner` function that allows to run subsequent commands.
+
+*commandTest/config.js*:
+```javascript
+module.exports = {
+  value: 'Hello, world!',
+  command: {
+    echo: args => {
+      console.log('custom echo: ' + args.join(' '));
+    },
+    dockerCompose: {
+      test: (args, config) => console.log(config.value)
+    },
+    // "command.enabled" option is set to false to avoid calling this "ls" command recursively and call system "ls" executable
+    ls: (args, config, runner) => runner(['ls', ...args], {command: {enabled: false}})
+  }
+};
+```
+
+```javascript
+runner(['echo', 'a', 'b', 'c'], 'commandTest');
+// prints "custom echo: a b c"
+
+runner(['dockerCompose', 'test'], 'commandTest');
+// prints "Hello, world!"
+
+runner(['ls', '.'], 'commandTest');
+//prints current directory content
+```
+
+#### `command.property` option
+
+Default is `command`. Runner will search commands in flavors configuration under the property name specified in this option.
+
+#### `command.enabled` option
+
+Default is `true`.
+Set to `false` to disable command resolving from flavors configuration.
+
+
+
+
+#### `spawn` option
+
+##### `spawn.options` option
+
+Options passed to `child_process.spawnSync()` or `child_process.spawn()` method (see `spawn.sync` [option](#spawn.async-option)).
+For example, use `{ shell: true }` to execute command inside shell to enable variable expansion:
+
+```javascript
+runner('echo $someValue', configName, {shell: true});
+```
+
+##### `spawn.async` option
+
+Set this options to `true` to use [`child_process.spawn()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawn_command_args_options) to run command asynchronously.
+By default [`child.process.spawnSync()`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) is used.
+
+### Returned value
+
+Returns result of `child_process.spawn()` or `child_process.spawnSync()` call (see `sync` [option](#spawn.async-option)).
 
 ## Maintainers
 

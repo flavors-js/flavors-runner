@@ -2,112 +2,145 @@
 
 const
   assert = require('assert'),
+  child = require('child_process'),
   path = require('path'),
-  merge = require('deepmerge');
+  runner = require('..'),
+  cliPath = path.resolve(__dirname, '..', 'index.js');
 
 function testPath(...names) {
   return path.resolve(__dirname, ...names);
 }
 
-function runnerOutputEqual(options, expected) {
-  assert.strictEqual(runner(merge({
-    sync: true,
-    spawnOptions: {shell: true}
-  }, options)).stdout.toString(), expected + '\n');
+function runnerOutputEqual(expected, command, configName, testName, options) {
+  let actual = runner(command, configName, Object.assign({workingDir: testPath(testName)}, options));
+  if (actual.stdout) {
+    actual = actual.stdout.toString();
+    expected += '\n';
+  }
+  assert.deepStrictEqual(actual, expected);
 }
 
-const
-  commonTestPath = testPath('commonTest'),
-  runner = require('../index.js');
+function cliOutputEquals(expected, args, dir, env = {}) {
+  assert.deepStrictEqual(child.execFileSync(`${cliPath}`, args, {
+    cwd: testPath(dir),
+    env: Object.assign({}, process.env, env)
+  }).toString(), expected + '\n');
+}
 
 describe('runner', () => {
   it('initializes environment', () => {
-    runnerOutputEqual({
-      command: 'echo $value',
-      configName: 'a',
-      workingDir: commonTestPath
-    }, '1');
-  });
-  it('skips environment initialization', () => {
-    runnerOutputEqual({
-      command: 'echo $value',
-      configName: 'a',
-      skipEnv: true,
-      workingDir: commonTestPath
-    }, '');
+    runnerOutputEqual('1', 'echo $value', 'a', 'commonTest');
   });
   it('flattens config', () => {
-    runnerOutputEqual({
-      command: 'echo $nested_value',
-      configName: 'a',
-      workingDir: testPath('nested')
-    }, '1');
+    runnerOutputEqual('1', 'echo $nested_value', 'a', 'nested');
   });
   it('applies transform', () => {
-    runnerOutputEqual({
+    runnerOutputEqual('2 2 2', {
       args: ['$value', '$value'],
-      command: 'echo $value',
-      configName: 'a',
-      transform: require(testPath('transform', 'index.js')),
-      workingDir: commonTestPath
-    }, '2 2 2');
+      command: 'echo $value'
+    }, 'a', 'commonTest', {
+      transform: require(testPath('transform', 'index.js'))
+    });
   });
   it('applies configDirName', () => {
-    runnerOutputEqual({
-      command: 'echo $value',
-      configName: 'a',
-      configDirName: 'config',
-      workingDir: testPath('configDirName')
-    }, '1');
+    runnerOutputEqual('1', 'echo $value', 'a', 'configDirName', {
+      configDirName: 'config'
+    });
   });
   it('applies configFileName', () => {
-    runnerOutputEqual({
-      command: 'echo $value',
-      configFileName: 'custom',
-      configName: 'a',
-      workingDir: testPath('configFileName')
-    }, '1');
+    runnerOutputEqual('1', 'echo $value', 'a', 'configFileName', {
+      configFileName: 'custom'
+    });
   });
   it('applies loaders', () => {
-    runnerOutputEqual({
-      command: 'echo $value1$value2$value3',
-      configName: 'a-b-c',
-      loaders: [require('flavors/jsonLoader'), require('flavors/jsLoader'), require('flavors-loader-yaml')],
-      workingDir: testPath('loaders')
-    }, '123');
+    runnerOutputEqual('123', 'echo $value1$value2$value3', 'a-b-c', 'loaders', {
+      loaders: [require('flavors/jsonLoader'), require('flavors/jsLoader'), require('flavors-loader-yaml')]
+    });
   });
-  describe('runs Node.js module', () => {
-    it('with string', () => {
-      runnerOutputEqual({
+  describe('runs', () => {
+    it('string', () => {
+      runnerOutputEqual('1 1 1', {
         args: ['$value', '$value'],
-        command: require(testPath('module', 'string.js')),
-        configName: 'a',
-        workingDir: testPath('module')
-      }, '1 1 1');
+        command: 'echo $value'
+      }, 'a', 'commonTest');
     });
-    it('with function returning string', () => {
-      runnerOutputEqual({
-        args: ['$value', '$value'],
-        command: require(testPath('module', 'functionString.js')),
-        configName: 'a',
-        workingDir: testPath('module')
-      }, '1 1 1');
+    it('string array', () => {
+      runnerOutputEqual('1', ['echo', '$value'], 'a', 'commonTest');
     });
-    it('with function returning child_process.spawn() args', () => {
-      runnerOutputEqual({
-        args: ['$value', '$value'],
-        command: require(testPath('module', 'spawnArgs.js')),
-        configName: 'a',
-        workingDir: testPath('module')
-      }, '1 1 1');
+    it('function returning string', () => {
+      runnerOutputEqual('1', config => `echo ${config.value}`, 'a', 'commonTest');
     });
-    it('with object', () => {
-      runnerOutputEqual({
+    it('command structure', () => {
+      runnerOutputEqual('1', config => ({
+        command: 'echo',
+        args: [config.value]
+      }), 'a', 'commonTest');
+    });
+    it('plugin structure', () => {
+      runnerOutputEqual('2 2 2', {
         args: ['$value', '$value'],
-        command: require(testPath('module', 'object.js')),
-        configName: 'a',
-        workingDir: testPath('module')
-      }, '2 2 2');
+        plugin: {
+          command: config => ({
+            command: 'echo',
+            args: [config.value]
+          }),
+          options: {
+            transform: config => {
+              config.value += 1;
+              return config;
+            }
+          }
+        }
+      }, 'a', 'commonTest');
+    });
+    it('config command', () => runnerOutputEqual({
+      b: 2,
+      c: ['a', 'b', 'c']
+    }, ['echo', 'action', 'a', 'b', 'c'], 'a', 'configCommand'));
+    it('custom command property', () => runnerOutputEqual({
+      b: 2,
+      c: ['a', 'b', 'c']
+    }, ['echo', 'action', 'a', 'b', 'c'], 'a', 'customCommandProperty', {command: {property: 'customCommand'}}));
+    it('usual command if config command not found', () => runnerOutputEqual('notExists a b c', ['echo', 'notExists', 'a', 'b', 'c'], 'a', 'configCommand'));
+    it('config command with provided runner', () => runnerOutputEqual('1 2', ['test', '2'], 'a', 'configCommandRunner'));
+    it('usual command when config command is disabled', () => runnerOutputEqual('1', ['echo', '1'], 'a', 'configCommandDisable', {command: {enabled: false}}));
+  });
+
+  it('uses options from flavors options file: ' + runner.optionsFile, () => {
+    cliOutputEquals('2', ['echo', '$value'], 'flavorsOptions', {FLAVORS_CONFIG_NAME: 'test'});
+  });
+
+  it('uses options from local flavors options file: ' + runner.localOptionsFile, () => {
+    cliOutputEquals('14', ['echo', '$value1$value2'], 'localFlavorsOptions', {FLAVORS_CONFIG_NAME: 'a-b'});
+  });
+
+  it('uses custom flavors options file', () => {
+    const testName = 'customFlavorsOptions';
+    cliOutputEquals('1', ['echo', '$value'], testName, {
+      FLAVORS_CONFIG_NAME: 'test',
+      FLAVORS_OPTIONS_PATH: testPath(testName, testName + '.js')
+    });
+  });
+
+  it('uses custom flavors local options file', () => {
+    const testName = 'customFlavorsLocalOptions';
+    cliOutputEquals('14', ['echo', '$value1$value2'], testName, {
+      FLAVORS_CONFIG_NAME: 'a-b',
+      FLAVORS_LOCAL_OPTIONS_PATH: testPath(testName, 'customFlavorsOptions.local.js')
+    });
+  });
+
+  it('uses custom flavors config name', () => {
+    cliOutputEquals('1', ['echo', '$value'], 'customConfigName', {FLAVORS_CONFIG_NAME: 'custom'});
+  });
+
+  it('uses custom flavors options directory', () => {
+    it('uses options from flavors options file', () => {
+      const optionsDir = testPath('customFlavorsOptionsDir');
+      cliOutputEquals('1', ['echo', '$value'], '', {
+        FLAVORS_OPTIONS_PATH: optionsDir,
+        FLAVORS_LOCAL_OPTIONS_PATH: optionsDir
+      });
     });
   });
 });
